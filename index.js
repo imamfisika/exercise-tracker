@@ -29,25 +29,38 @@ app.post('/api/users', (req, res) => {
   res.json(user)
 })
 
+app.get('/api/users', (req, res) => {
+  res.json(users)
+})
+
 app.post('/api/users/:_id/exercises', (req, res) => {
-  console.log(users)
-  console.log(req.params._id)
+  console.log(req.body)
   const user = users.find(o => o._id === req.params._id)
-  console.log(user)
   let exercise = {
     _id : req.params._id,
     username: user.username,
     description : req.body.description,
-    duration: req.body.duration,
-    date : req.body.date
+    duration: Math.floor(req.body.duration),
+    date : req.body.date != null ? new Date(req.body.date).toDateString() : new Date().toDateString()
   }
-
+  console.log(exercise)
   exercises.push(exercise)
   res.json(exercise)
 })
 
 app.get('/api/users/:_id/logs', (req, res) => {
+
+  console.log(req.query)
   let filter = exercises.filter(x => x._id == req.params._id);
+
+  if (req.query.from != null && req.query.to != null) {
+    filter = filter.filter(x => new Date(x.date).getTime() >= new Date(req.query.from) && new Date(x.date).getTime() <= new Date(req.query.to).getTime());
+  }
+
+  if (req.query.limit != null) {
+    filter = [filter[0]];
+    console.log(filter)
+  }
 
   res.json({
     username: filter[0].username,
@@ -57,7 +70,7 @@ app.get('/api/users/:_id/logs', (req, res) => {
       return {
         description : x.description,
         duration : x.duration,
-        date: new Date(x.date).toDateString()
+        date: x.date
       }
     })
   })
